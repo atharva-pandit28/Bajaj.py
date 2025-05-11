@@ -1,0 +1,91 @@
+import requests
+import json
+
+def main():
+    webhook_url = "https://bfhldevapigw.healthrx.co.in/hiring/generateWebhook/PYTHON"
+
+    user_data = {
+        "name": "Atharva Pandit",
+        "regNo": "0827CY221018",
+        "email": "atharvapandit555@gmail.com"
+    }
+
+    try:
+        webhook_response = requests.post(webhook_url, json=user_data)
+
+        if webhook_response.status_code == 200:
+            response_data = webhook_response.json()
+            result_webhook = response_data.get("webhook")
+            access_token = response_data.get("accessToken")
+
+            print("Webhook generation successful!")
+            print(f"Webhook URL: {result_webhook}")
+            print(f"Access Token: {access_token}")
+
+            last_digit = int(user_data["regNo"][-1])
+            is_odd = last_digit % 2 != 0
+
+            if is_odd:
+                print("Solving Question 1")
+                final_query = solve_question_1()
+            else:
+                print("Solving Question 2")
+                final_query = solve_question_2()
+
+            submit_url = result_webhook
+
+            headers = {
+                "Authorization": access_token,
+                "Content-Type": "application/json"
+            }
+
+            solution_data = {
+                "finalQuery": final_query
+            }
+
+            submit_response = requests.post(submit_url, headers=headers, json=solution_data)
+
+            if submit_response.status_code == 200:
+                print("Solution submitted successfully!")
+                print(f"Response: {submit_response.text}")
+            else:
+                print(f"Error submitting solution: {submit_response.status_code}")
+                print(f"Response: {submit_response.text}")
+        else:
+            print(f"Error generating webhook: {webhook_response.status_code}")
+            print(f"Response: {webhook_response.text}")
+    except Exception as e:
+        print(f"An error occurred: {str(e)}")
+
+def solve_question_1():
+    return """
+    SELECT 
+        p.AMOUNT AS SALARY,
+        CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME,
+        TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE,
+        d.DEPARTMENT_NAME
+    FROM PAYMENTS p
+    JOIN EMPLOYEE e ON p.EMP_ID = e.EMP_ID
+    JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID
+    WHERE DAY(p.PAYMENT_TIME) != 1
+    ORDER BY p.AMOUNT DESC
+    LIMIT 1;
+    """
+
+def solve_question_2():
+    return """
+    SELECT 
+        p.AMOUNT AS SALARY,
+        CONCAT(e.FIRST_NAME, ' ', e.LAST_NAME) AS NAME,
+        TIMESTAMPDIFF(YEAR, e.DOB, CURDATE()) AS AGE,
+        d.DEPARTMENT_NAME
+    FROM PAYMENTS p
+    JOIN EMPLOYEE e ON p.EMP_ID = e.EMP_ID
+    JOIN DEPARTMENT d ON e.DEPARTMENT = d.DEPARTMENT_ID
+    WHERE DAY(p.PAYMENT_TIME) != 1
+    ORDER BY p.AMOUNT DESC
+    LIMIT 1;
+    """
+
+if __name__ == "__main__":
+    main()
